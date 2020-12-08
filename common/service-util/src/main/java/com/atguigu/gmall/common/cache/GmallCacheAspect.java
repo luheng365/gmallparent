@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.constant.RedisConst;
 import lombok.SneakyThrows;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -18,9 +19,10 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author mqx
+ * @author luheng
+ * @create 2020-12-08 16:17
  * 处理环绕通知
- * @date 2020-11-11 09:30:29
+ * @param:
  */
 @Component
 @Aspect
@@ -42,12 +44,16 @@ public class GmallCacheAspect {
         //  获取到注解，注解使用在方法上！
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         GmallCache gmallCache = signature.getMethod().getAnnotation(GmallCache.class);
+
         //  获取到注解上的前缀
         String prefix = gmallCache.prefix(); // sku
+
         //  方法传入的参数
         Object[] args = joinPoint.getArgs();
+
         //  组成缓存的key 需要前缀+方法传入的参数
         String key = prefix+ Arrays.asList(args).toString();
+
         //  防止redis ，redisson 出现问题！
         try {
             //  从缓存中获取数据
@@ -118,4 +124,5 @@ public class GmallCacheAspect {
         }
         return null;
     }
+
 }

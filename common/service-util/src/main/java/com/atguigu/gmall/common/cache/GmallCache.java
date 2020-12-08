@@ -1,15 +1,22 @@
 package com.atguigu.gmall.common.cache;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * @author mqx
- * @date 2020-11-11 09:21:16
+ * @author luheng
+ * @create 2020-12-08 16:15
+ * @param:
  */
-@Target(ElementType.METHOD) //  注解使用范围
-@Retention(RetentionPolicy.RUNTIME) //  注解的生命周期
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface GmallCache {
 
-    //  定义一个组成缓存中 key 的前缀！
+    /**
+     * 缓存key的前缀
+     * @return
+     */
     String prefix() default "cache";
 }
