@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author luheng
@@ -26,35 +28,59 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private ProductFeignClient productFeignClient;
 
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
+
     //  http://item.gmall.com/39.html;  web-all 39.html  skuId = 39
     @Override
     public Map<String, Object> getBySkuId(Long skuId) {
         Map<String, Object> map = new HashMap<>();
         //  获取数据
         //  select * from sku_info where id =skuId;
-        SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
+        //创建一个线程对象 supplyAsync()方法没有参数有返回值
+        CompletableFuture<SkuInfo> skuInfoCompletableFuture = CompletableFuture.supplyAsync(() -> {
+            SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
+            map.put("skuInfo",skuInfo);
+            return skuInfo;
+        },threadPoolExecutor);
+        CompletableFuture<Void> categoryViewCompletableFuture = skuInfoCompletableFuture.thenAcceptAsync((skuInfo) -> {
+            //  获取分类数据
+            BaseCategoryView categoryView = productFeignClient.getCategoryView(skuInfo.getCategory3Id());
+            map.put("categoryView", categoryView);
+        },threadPoolExecutor);
 
-        //  获取分类数据
-        BaseCategoryView categoryView = productFeignClient.getCategoryView(skuInfo.getCategory3Id());
-        //  价格
-        BigDecimal skuPrice = productFeignClient.getSkuPrice(skuId);
+        CompletableFuture<Void> skuPriceCompletableFuture = CompletableFuture.runAsync(() -> {
+            //  价格
+            BigDecimal skuPrice = productFeignClient.getSkuPrice(skuId);
+            map.put("price",skuPrice);
+        },threadPoolExecutor);
 
-        //  获取销售属性销售属性值回显并锁定
-        List<SpuSaleAttr> spuSaleAttrListCheckBySku = productFeignClient.getSpuSaleAttrListCheckBySku(skuId, skuInfo.getSpuId());
+        CompletableFuture<Void> spuSaleAttrListCompletableFuture = skuInfoCompletableFuture.thenAcceptAsync((skuInfo -> {
+            //  获取销售属性销售属性值回显并锁定
+            List<SpuSaleAttr> spuSaleAttrListCheckBySku = productFeignClient.getSpuSaleAttrListCheckBySku(skuId, skuInfo.getSpuId());
+            map.put("spuSaleAttrList", spuSaleAttrListCheckBySku);
+        }),threadPoolExecutor);
 
-        //  获取切换数据
-        Map skuValueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
-        //  skuValueIdsMap 转换为Json 字符串
-        String mapJson = JSON.toJSONString(skuValueIdsMap);
+        CompletableFuture<Void> MapCompletableFuture = skuInfoCompletableFuture.thenAcceptAsync((skuInfo -> {
 
+            //  获取切换数据
+            Map skuValueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
+            //  skuValueIdsMap 转换为Json 字符串
+            String mapJson = JSON.toJSONString(skuValueIdsMap);
+
+            map.put("valuesSkuJson",mapJson);
+        }),threadPoolExecutor);
         // web-all 需要渲染数据，页面需要获取对应的key。key 是谁 从页面找！  Model model model.addAllAttributes()
         //  分类数据的值 =  productFeignClient.get分类数据的方法
         //  map.put("分类数据的key","分类数据的值");
-        map.put("categoryView",categoryView);
-        map.put("price",skuPrice);
-        map.put("valuesSkuJson",mapJson);
-        map.put("spuSaleAttrList",spuSaleAttrListCheckBySku);
-        map.put("skuInfo",skuInfo);
+
+        //多任务组合
+        CompletableFuture.allOf(
+                skuInfoCompletableFuture,
+                categoryViewCompletableFuture,
+                skuPriceCompletableFuture,
+                spuSaleAttrListCompletableFuture,
+                MapCompletableFuture).join();
 
         return map;
     }
