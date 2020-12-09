@@ -28,8 +28,8 @@
 					</div>
 					<div class="sort">
 						<div class="all-sort-list2">
-
-							<div th:each="category1,st: ${list}" th:if="${st.index}" th:class="${st.index == 0} ? 'item bo' : 'item'">
+							<!--th:if="${st.index}"-->
+							<div th:each="category1,st: ${list}"  th:class="${st.index == 0} ? 'item bo' : 'item'">
 								<h3>
 									<a th:href="@{http://list.gmall.com/list.html?category1Id={category1Id}(category1Id=${category1.categoryId})}" th:text="${category1.categoryName}" target="_blank">手机、数码、充值</a>
 								</h3>

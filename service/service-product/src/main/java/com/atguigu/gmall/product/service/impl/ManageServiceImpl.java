@@ -75,6 +75,10 @@ public class ManageServiceImpl implements ManageService {
     private RedissonClient redissonClient;
 
 
+    @Autowired
+    private BaseTrademarkMapper baseTrademarkMapper;
+
+
     //加载所有的一级分类
     @Override
     public List<BaseCategory1> findAll() {
@@ -613,6 +617,24 @@ public class ManageServiceImpl implements ManageService {
         }
         //返回数据
         return list;
+    }
+    /**商品检索首页
+     * 通过品牌Id 来查询数据【所有的品牌】
+     * @param tmId
+     * @return
+     */
+    @Override
+    public BaseTrademark getTrademarkByTmId(Long tmId) {
+        return baseTrademarkMapper.selectById(tmId);
+    }
+    /**
+     * 通过skuId 集合来查询数据【平台属性+平台属性值】
+     * @param skuId
+     * @return
+     */
+    @Override
+    public List<BaseAttrInfo> getAttrList(Long skuId) {
+        return baseAttrInfoMapper.selectBaseAttrInfoListBySkuId(skuId);
     }
 
 }

@@ -2,6 +2,7 @@ package com.atguigu.gmall.item.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.item.service.ItemService;
+import com.atguigu.gmall.list.client.ListFeignClient;
 import com.atguigu.gmall.model.product.BaseCategoryView;
 import com.atguigu.gmall.model.product.SkuInfo;
 import com.atguigu.gmall.model.product.SpuSaleAttr;
@@ -30,6 +31,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
+
+    @Autowired
+    private ListFeignClient listFeignClient;
 
     //  http://item.gmall.com/39.html;  web-all 39.html  skuId = 39
     @Override
@@ -74,13 +78,19 @@ public class ItemServiceImpl implements ItemService {
         //  分类数据的值 =  productFeignClient.get分类数据的方法
         //  map.put("分类数据的key","分类数据的值");
 
+        CompletableFuture<Void> incrHotScoreCompletableFuture = CompletableFuture.runAsync(() -> {
+            listFeignClient.incrHotScore(skuId);
+        });
+
         //多任务组合
         CompletableFuture.allOf(
                 skuInfoCompletableFuture,
                 categoryViewCompletableFuture,
                 skuPriceCompletableFuture,
                 spuSaleAttrListCompletableFuture,
-                MapCompletableFuture).join();
+                MapCompletableFuture,
+                incrHotScoreCompletableFuture
+        ).join();
 
         return map;
     }
