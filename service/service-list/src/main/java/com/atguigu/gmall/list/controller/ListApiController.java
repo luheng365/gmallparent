@@ -3,12 +3,13 @@ package com.atguigu.gmall.list.controller;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.list.service.SearchService;
 import com.atguigu.gmall.model.list.Goods;
+import com.atguigu.gmall.model.list.SearchParam;
+import com.atguigu.gmall.model.list.SearchResponseVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 /**
  * @author luheng
@@ -18,33 +19,34 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/list")
 public class ListApiController {
+    //  使用api ElasticsearchRestTemplate 来执行创建index，type
+    @Autowired
+    private ElasticsearchRestTemplate restTemplate;
 
     @Autowired
     private SearchService searchService;
 
-    @Autowired
-    private ElasticsearchRestTemplate restTemplate;
-
-    /**
-     * 商品首页检索信息
-     * @return
-     */
+    //  访问这个控制器的时候，自动创建index,type
     @GetMapping("inner/createIndex")
-    public Result createIndex() {
+    public Result createIndex(){
+        //  执行方法
         restTemplate.createIndex(Goods.class);
         restTemplate.putMapping(Goods.class);
+
         return Result.ok();
     }
+
     /**
      * 上架商品
      * @param skuId
      * @return
      */
     @GetMapping("inner/upperGoods/{skuId}")
-    public Result upperGoods(@PathVariable Long skuId){
+    public Result upperGoods(@PathVariable("skuId") Long skuId) {
         searchService.upperGoods(skuId);
         return Result.ok();
     }
+
     /**
      * 下架商品
      * @param skuId
@@ -55,12 +57,8 @@ public class ListApiController {
         searchService.lowerGoods(skuId);
         return Result.ok();
     }
-    /**
-     * 更新商品incrHotScore
-     *
-     * @param skuId
-     * @return
-     */
+
+    //  远程调用接口
     @GetMapping("inner/incrHotScore/{skuId}")
     public Result incrHotScore(@PathVariable("skuId") Long skuId) {
         // 调用服务层
@@ -68,4 +66,11 @@ public class ListApiController {
         return Result.ok();
     }
 
+    //  测试检索
+    //  @RequestBody 接收json 数据，并将其转换为java 对象
+    @PostMapping
+    public Result list(@RequestBody SearchParam searchParam) throws Exception {
+        SearchResponseVo response = searchService.search(searchParam);
+        return Result.ok(response);
+    }
 }

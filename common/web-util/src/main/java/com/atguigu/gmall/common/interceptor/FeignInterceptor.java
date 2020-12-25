@@ -15,12 +15,10 @@ public class FeignInterceptor implements RequestInterceptor {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             HttpServletRequest request = attributes.getRequest();
 
-//            System.out.println(request.getHeader("userTempId"));
-//            System.out.println(request.getHeader("userId"));
+
             requestTemplate.header("userTempId", request.getHeader("userTempId"));
             requestTemplate.header("userId", request.getHeader("userId"));
 
-            //
     }
 
 }

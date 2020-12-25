@@ -41,7 +41,7 @@
 						<b class='ever-price' th:text="'￥'+${item.price}">￥0</b>
 					</div>
 					<div class='num'>
-						<div th:text="'已售'+${item.num}">已售1</div>
+						<div th:text="'已售'+${item.num -item.stockCount}">已售1</div>
 						<div class='progress'>
 							<div class='sui-progress progress-danger'>
 								<span style='width: 70%;' class='bar'></span>

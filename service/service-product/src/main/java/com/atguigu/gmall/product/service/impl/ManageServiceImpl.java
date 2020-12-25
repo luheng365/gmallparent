@@ -2,7 +2,9 @@ package com.atguigu.gmall.product.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.cache.GmallCache;
+import com.atguigu.gmall.common.constant.MqConst;
 import com.atguigu.gmall.common.constant.RedisConst;
+import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
@@ -77,6 +79,10 @@ public class ManageServiceImpl implements ManageService {
 
     @Autowired
     private BaseTrademarkMapper baseTrademarkMapper;
+
+
+    @Autowired
+    private RabbitService rabbitService;
 
 
     //加载所有的一级分类
@@ -301,6 +307,13 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(1);
         skuInfoMapper.updateById(skuInfo);
+
+        //异步处理：发送消息给mq消费消息在service-list 上架
+        //发送消息的内容是什么？需要根据消费方来确认
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,MqConst.ROUTING_GOODS_UPPER,skuId);
+
+
+
     }
     /**
      * 商品下架
@@ -314,6 +327,9 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
+
+        //异步处理：发送消息给mq消费消息在service-list 下架
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,MqConst.ROUTING_GOODS_LOWER,skuId);
     }
 
     /**

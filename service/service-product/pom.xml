@@ -21,5 +21,12 @@
             <groupId>net.oschina.zcx7878</groupId>
             <artifactId>fastdfs-client-java</artifactId>
         </dependency>
+
+        <!--rabbitmq消息队列-->
+        <dependency>
+            <groupId>com.atguigu.gmall</groupId>
+            <artifactId>rabbit-util</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 </project>
